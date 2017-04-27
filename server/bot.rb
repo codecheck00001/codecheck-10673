@@ -20,10 +20,11 @@ EM::WebSocket.start(host: ENV['IP'], port: ENV['PORT']) do |con|
   con.onmessage do |jsonmsg|
     msg = JSON.parse(jsonmsg)
 
-    if msg['text'] === '@bot ping'
-      con.send(bot_message('pong'))
+    if msg['text'] === '@bot ping' || msg['text'] == 'bot:ping' || msg['text'] == 'bot ping'
+      # con.send(bot_message('pong'))
+      cons.each {|c| c.send(bot_message('pong')) }
     else
-      cons.each {|con| con.send(message(msg['text'])) }
+      cons.each {|c| c.send(message(msg['text'])) }
     end
   end
 
