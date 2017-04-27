@@ -2,32 +2,33 @@ require 'em-websocket'
 require 'json'
 
 cons = []
-closed = []
 
-def response(msg)
-  data = {type: 'message', text: msg['text'], success: true}
+def message(msg)
+  {type: 'message', text: msg, success: true}.to_json
+end
 
-  if msg['text'] === '@bot ping'
-    data[:type] = 'bot'
-    data[:text] = 'pong'
-  end
-
-  puts data.to_json
-  data.to_json
+def bot_message(msg)
+  {type: 'bot', text: msg, success: true}.to_json
 end
 
 EM::WebSocket.start(host: ENV['IP'], port: ENV['PORT']) do |con|
   con.onopen do
     cons << con
+    puts "onopen: cons = #{cons.size}"
   end
 
   con.onmessage do |jsonmsg|
     msg = JSON.parse(jsonmsg)
-    cons.each {|con| con.send(response(msg)) unless closed.include?(con) }
+
+    if msg['text'] === '@bot ping'
+      con.send(bot_message('pong'))
+    else
+      cons.each {|con| con.send(message(msg['text'])) }
+    end
   end
 
   con.onclose do
-    puts 'onclose'
-    closed << con
+    cons.delete(con)
+    puts "onclose: cons = #{cons.size}"
   end
 end
