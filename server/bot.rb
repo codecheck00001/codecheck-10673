@@ -1,16 +1,20 @@
 require 'em-websocket'
+require 'json'
 
 cons = []
 
-puts 'start server'
+def response
+  data = {type: 'message', text: msg['text'], success: true}
+  data.to_json
+end
+
 EM::WebSocket.start(host: ENV['IP'], port: ENV['PORT']) do |con|
   con.onopen do
-    puts 'onopen'
     cons << con
   end
 
   con.onmessage do |msg|
-    puts 'onmessage', msg
-    cons.each {|con| con.send(msg) }
+    msg = JSON.parse(msg)
+    cons.each {|con| con.send(response(msg)) }
   end
 end
